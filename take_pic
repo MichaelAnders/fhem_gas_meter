@@ -1,0 +1,17 @@
+#!/bin/bash
+
+cd /home/bjoern/gas/
+
+rm photo*.jpg*
+count=`cat counter.txt`
+if [ "${count}" == "5" ]
+then
+  wget 192.168.178.22:8080/photoaf.jpg --timeout 30
+  mv photoaf.jpg photo.jpg
+  count=1
+else
+  wget 192.168.178.22:8080/photo.jpg --timeout 30
+  count=$((count + 1))
+fi
+
+echo "$count" > counter.txt

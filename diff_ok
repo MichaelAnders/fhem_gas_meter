@@ -1,0 +1,65 @@
+#!/bin/bash
+cd /home/bjoern/gas/
+
+#tail -n 1 results.txt > results_temp.txt
+#old_result=`cut -c 23-30 results_temp.txt`
+old_result=$3
+#echo "diff_ok1 ${old_result}"
+
+curr_date=$2
+#`date +%s`
+#y=`cut -c 1-4 results_temp.txt`
+#m=`cut -c 6-7 results_temp.txt`
+#d=`cut -c 9-10 results_temp.txt`
+#hh=`cut -c 12-13 results_temp.txt`
+#mm=`cut -c 15-16 results_temp.txt`
+#ss=`cut -c 18-19 results_temp.txt`
+
+#str=`echo ${y}-${m}-${d} ${hh}:${mm}:${ss}`
+#echo $str
+old_date=$1
+#`date +%s -u -d "${str}"`
+#$y-$m-$d $hh:$mm:$ss`
+
+#echo "$curr_date"
+#echo "$old_date"
+#2017_01_23_20_53_04
+diff_sec=`echo "scale=1; ${curr_date} - ${old_date}" | bc`
+echo "diff_sec ${diff_sec}"  >> diff_ok.txt
+
+max_m3_hour=6
+max_m3_sec=`echo "scale=5; ${max_m3_hour} / 60 / 60" | bc`
+
+echo "max_m3_sec = ${max_m3_sec}"  >> diff_ok.txt
+
+curr_result=$4
+
+diff_result=`echo "${curr_result} < ${old_result}" | bc`
+if [ ${diff_result} -eq "1" ]
+then
+    echo "-1"
+    exit
+fi
+
+diff_result=`echo "scale=5; ${curr_result} - ${old_result}" | bc`
+
+echo "diff_result = ${diff_result}" >> diff_ok.txt
+
+#m3/sec?
+diff_per_sec=`echo "scale=10; ${diff_result} / ${diff_sec}" | bc`
+echo "diff_per_sec = ${diff_per_sec}" >> diff_ok.txt
+
+echo "diff_ok = ${diff_per_sec} < ${max_m3_sec}"  >> diff_ok.txt
+
+diff_ok=`echo "${diff_per_sec} < ${max_m3_sec}" | bc`
+
+echo "diff_ok = $diff_ok"  >> diff_ok.txt
+
+if [ ${diff_ok} -eq "1" ]
+then
+    echo "sending back ${diff_per_sec}"  >> diff_ok.txt
+    echo "${diff_per_sec}"
+else
+    echo "sending back -1"  >> diff_ok.txt
+    echo "-1"
+fi

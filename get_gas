@@ -1,0 +1,64 @@
+#!/bin/bash
+cd /home/bjoern/gas/
+
+date=`date +%Y_%m_%d_%H_%M_%S`
+
+mv photo.jpg new.jpg
+
+rm photo*.jpg
+
+mv new.jpg photo.jpg
+
+
+convert -rotate +0.3 photo.jpg photoaf_rotate.jpg
+
+convert -crop 620x125+95+340 photoaf_rotate.jpg photoaf_small.jpg
+
+convert -distort perspective '7,11 0,1 7,60 0,70 570,1 572,0' photoaf_small.jpg photoaf_distort.jpg
+
+convert -negate photoaf_distort.jpg photoaf_negate.jpg
+
+convert photoaf_negate.jpg -white-threshold 70% photoaf_white.jpg
+
+convert photoaf_white.jpg -black-threshold 70% photoaf_black.jpg
+#convert photoaf_white.jpg -channel rgba -alpha set -fuzz 30% -fill white -opaque "#6bdcda" photoaf_bw.jpg
+#cp photoaf_white.jpg photoaf_bw.jpg
+
+#convert photoaf_bw.jpg -fx "i>=257&&i<=281&&j>=20&&j<=45?white:u" photoaf_removed.jpg
+cp photoaf_bw.jpg photoaf_removed.jpg
+
+#convert photoaf_removed.jpg -black-threshold 95% photoaf_black.jpg
+cp photoaf_removed.jpg photoaf_black.jpg
+
+# skip first digit
+convert -crop 342x120+87+0 photoaf_black.jpg photoaf_before.jpg
+convert -crop 50x120+470+0 photoaf_black.jpg photoaf_5.jpg
+convert -crop 50x120+573+0 photoaf_black.jpg photoaf_6.jpg
+convert photoaf_5.jpg photoaf_6.jpg +append photoaf_after.jpg
+
+# skip first digit
+#convert -crop 50x120+0+0 photoaf_black.jpg photoaf_1.jpg
+convert -crop 50x120+87+0 photoaf_black.jpg photoaf_1.jpg
+convert -crop 50x120+182+0 photoaf_black.jpg photoaf_2.jpg
+convert -crop 50x120+280+0 photoaf_black.jpg photoaf_3.jpg
+convert -crop 50x120+373+0 photoaf_black.jpg photoaf_4.jpg
+
+convert photoaf_1.jpg photoaf_2.jpg photoaf_3.jpg photoaf_4.jpg photoaf_5.jpg photoaf_6.jpg +append final.jpg
+
+convert photoaf_1.jpg photoaf_2.jpg photoaf_3.jpg photoaf_4.jpg +append before.jpg
+
+convert photoaf_5.jpg photoaf_6.jpg +append after.jpg
+
+convert photoaf_1.jpg photoaf_1.jpg photoaf_1.jpg photoaf_1.jpg photoaf_1.jpg photoaf_1.jpg photoaf_1.jpg photoaf_1.jpg photoaf_1.jpg photoaf_1.jpg +append long_1.jpg
+convert photoaf_2.jpg photoaf_2.jpg photoaf_2.jpg photoaf_2.jpg photoaf_2.jpg photoaf_2.jpg photoaf_2.jpg photoaf_2.jpg photoaf_2.jpg photoaf_2.jpg +append long_2.jpg
+convert photoaf_3.jpg photoaf_3.jpg photoaf_3.jpg photoaf_3.jpg photoaf_3.jpg photoaf_3.jpg photoaf_3.jpg photoaf_3.jpg photoaf_3.jpg photoaf_3.jpg +append long_3.jpg
+convert photoaf_4.jpg photoaf_4.jpg photoaf_4.jpg photoaf_4.jpg photoaf_4.jpg photoaf_4.jpg photoaf_4.jpg photoaf_4.jpg photoaf_4.jpg photoaf_4.jpg +append long_4.jpg
+convert photoaf_5.jpg photoaf_5.jpg photoaf_5.jpg photoaf_5.jpg photoaf_5.jpg photoaf_5.jpg photoaf_5.jpg photoaf_5.jpg photoaf_5.jpg photoaf_5.jpg +append long_5.jpg
+convert photoaf_6.jpg photoaf_6.jpg photoaf_6.jpg photoaf_6.jpg photoaf_6.jpg photoaf_6.jpg photoaf_6.jpg photoaf_6.jpg photoaf_6.jpg photoaf_6.jpg +append long_6.jpg
+
+convert after.jpg after.jpg after.jpg after.jpg +append after_long.jpg
+convert before.jpg before.jpg +append before_long.jpg
+
+cp final.jpg "${date}.jpg"
+
+rm photo.jpg

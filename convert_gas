@@ -1,0 +1,207 @@
+#!/bin/bash
+
+cd /home/bjoern/gas/
+
+rm long*.txt
+rm before*.txt
+rm after*.txt
+rm final.txt
+
+tail -n 1 results.txt > results_temp.txt
+old_result=`cut -c 23-30 results_temp.txt`
+
+y=`cut -c 1-4 results_temp.txt`
+m=`cut -c 6-7 results_temp.txt`
+d=`cut -c 9-10 results_temp.txt`
+hh=`cut -c 12-13 results_temp.txt`
+mm=`cut -c 15-16 results_temp.txt`
+ss=`cut -c 18-19 results_temp.txt`
+
+str=`echo ${y}-${m}-${d} ${hh}:${mm}:${ss}`
+echo $str
+old_date=`date +%s -u -d "${str}"`
+
+date2=`date +%s -u`
+date=`date -u +%Y_%m_%d_%H_%M_%S`
+cuneiform -l ger -f text -o long_1.txt long_1.jpg
+cuneiform -l ger -f text -o long_2.txt long_2.jpg
+cuneiform -l ger -f text -o long_3.txt long_3.jpg
+cuneiform -l ger -f text -o long_4.txt long_4.jpg
+cuneiform -l ger -f text -o long_5.txt long_5.jpg
+cuneiform -l ger -f text -o long_6.txt long_6.jpg
+
+cuneiform -l ger -f text -o before.txt before.jpg
+cuneiform -l ger -f text -o before_long.txt before_long.jpg
+
+cuneiform -l ger -f text -o after_long.txt after_long.jpg
+
+cuneiform -l ger -f text -o final.txt final.jpg
+
+final=`cat final.txt`
+
+before=`cat before.txt`
+
+flipped=`cut -c 1-1 before_long.txt`
+flipped=1
+if [ "${flipped}" == "0" ]
+then
+  echo "Seems we flipped..."
+  echo "2" > high.txt
+fi
+
+high=`cat high.txt`
+
+echo "high is ${high}"
+
+before_long1=`cut -c 1-4 before_long.txt`
+before_long2=`cut -c 5-8 before_long.txt`
+
+after_long1=`cut -c 1-2 after_long.txt`
+after_long2=`cut -c 3-4 after_long.txt`
+after_long3=`cut -c 5-6 after_long.txt`
+after_long4=`cut -c 7-8 after_long.txt`
+
+chrlen=${#before_long1}
+
+if [ ${chrlen} -lt 4 ]
+then
+echo "err1"
+exit
+fi
+
+chrlen=${#after_long1}
+if [ ${chrlen} -lt 2 ]
+then
+echo "err2"
+exit
+fi
+
+echo $final
+echo $before
+echo $after_long1
+
+echo $before_long1
+
+echo "c1 ${before_long1} == ${before_long2} ?"
+
+comp="scale = 2; ${before_long1} / ${before_long2}"
+
+echo "comp = $comp"
+
+a1=`echo "$comp" | bc`
+
+if [ -z "${a1}" ]
+then
+echo "error first digits"
+exit
+fi
+
+echo "a1 = $a1"
+
+diff_ok=`echo "${a1} == 1.00" | bc`
+
+echo "$a1 ; $diff_ok"
+
+# check if second entry is a digit
+comp="scale = 2; ${after_long1} / ${after_long1}"
+
+echo "comp = $comp"
+
+a1=`echo "$comp" | bc`
+
+if [ -z "${a1}" ]
+then
+echo "error second digit"
+exit
+fi
+
+if [ ${diff_ok} -eq "1" ]
+then
+  echo "First part OK"
+
+  echo "${after_long1} == ${after_long2} ?"
+
+  if [ "$after_long1" == "$after_long2" ]
+  then
+    echo "1/3 OK"
+
+	echo "${after_long2} == ${after_long3} ?"
+
+    if [ "$after_long2" == "$after_long3" ]
+    then
+      echo "2/3 OK"
+
+	echo "${after_long3} == ${after_long4} ?"
+
+      if [ "$after_long3" == "$after_long4" ]
+      then
+        echo "Second part OK"
+
+        check=${before_long1}${after_long1}
+        echo "check = ${check}"
+
+
+#        if [ "$check" == "$final" ]
+#        then
+        result="${high}${before_long1}${after_long1}"
+
+	echo "result = ${result}"
+
+	result=`echo "${result} " | bc`
+
+        # check if this is a number
+	test=`echo "${result} + 1" | bc`
+        echo "test = ${test}"
+	test=`echo "${test} - 1" | bc`
+
+        if [ "$test" == "$result" ]
+        then
+          echo "verified as a number"
+          result2="${high}${before_long1}.${after_long1}"
+          str1="${old_date} ${date2} ${old_result} ${result2}"
+
+          echo "Old date / current date / old result / current result = ${str1}"
+          ok=`./diff_ok ${str1}`
+
+          echo "ok convert_gas = ${ok}"
+          diff_m3=`echo "scale=2; ${result2} - ${old_result}" | bc`
+
+          diff_kw=`echo "scale=2; ${diff_m3} * 10" | bc` # correct till here
+#          diff_kwh=`echo "scale=5; ( ${result2} - ${old_result} ) * 10" | bc`
+
+          diff_ok=`echo "${ok} > 0" | bc`
+
+	echo "diff_ok convert_gas = ${diff_ok}"
+
+          if [ ${diff_ok} -eq "1" ]
+          then
+            diff_kwh=`echo "scale=10; ${ok} * 10" | bc`
+            costs=`echo "scale=10; ${diff_kw} * 0.044" | bc`
+
+            echo "Value is ${result2}"
+
+            echo "${date} : ${result2} : ${ok}" >> results.txt
+
+            echo "${diff_kw}"
+            echo "${diff_kwh}"
+            echo "${costs}"
+
+            echo "set gasdiffkw ${diff_kw}" > a
+            echo "set gasdiffkwh ${diff_kwh}" > b
+            echo "set gasvalue ${result2}" > c
+            echo "set gascosts ${costs}" > d
+
+            cat a | nc -q 0 192.168.100.102 7072
+            cat b | nc -q 0 192.168.100.102 7072
+            cat c | nc -q 0 192.168.100.102 7072
+            cat d | nc -q 0 192.168.100.102 7072
+          else
+            echo "invalid ; ${ok}"
+          fi
+        else
+          echo "No result due to digit problem?."
+        fi
+     fi
+    fi
+  fi
+fi
