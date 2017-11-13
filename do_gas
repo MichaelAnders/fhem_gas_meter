@@ -1,18 +1,8 @@
 #!/bin/bash
 
-file="/home/bjoern/gas_running"
-
-#if [ -f "$file" ]
-#then
-#	echo "$file found, killing and exiting"
+# sometimes hangs so kill it
 killall -9 cuneiform
-#	exit
-#else
-#	echo "$file not found, continuing"
-#fi
 
-echo "1" > $file
-/home/bjoern/gas/take_pic
-/home/bjoern/gas/get_gas
-/home/bjoern/gas/convert_gas
-rm $file
+/home/bjoern/gasmeter/take_pic
+/home/bjoern/gasmeter/get_gas
+/home/bjoern/gasmeter/convert_gas

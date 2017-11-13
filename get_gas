@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /home/bjoern/gas/
+cd /home/bjoern/gasmeter/
 
 date=`date +%Y_%m_%d_%H_%M_%S`
 
